@@ -50,13 +50,25 @@ export default function LoginPage() {
       window.location.replace("/function/tasks");
       return;
     }
+    // Utumno fork: single sign-on. If a trusted reverse proxy (Authentik forward-auth)
+    // has already authenticated the user, mint a session and go straight in — no form.
+    // Any failure (403 = not behind the trusted proxy) falls through to the normal
+    // status check and password form, so nothing changes for a direct/LAN login.
     api
-      .authStatus()
-      .then(({ initialized }) => {
-        if (!initialized) router.replace("/setup");
+      .ssoLogin()
+      .then(({ token }) => {
+        auth.setToken(token);
+        window.location.replace("/function/tasks");
       })
-      .catch(() => setError("Unable to connect to the backend service"))
-      .finally(() => setChecking(false));
+      .catch(() => {
+        api
+          .authStatus()
+          .then(({ initialized }) => {
+            if (!initialized) router.replace("/setup");
+          })
+          .catch(() => setError("Unable to connect to the backend service"))
+          .finally(() => setChecking(false));
+      });
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {

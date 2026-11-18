@@ -242,6 +242,10 @@ export const api = {
   // ---- auth ----
   authStatus: () => get<{ initialized: boolean }>("/auth/status"),
   login: (username: string, password: string) => post<{ token: string }>("/auth/login", { username, password }),
+  // Utumno fork: single sign-on. When ARTEX sits behind Authentik forward-auth, the
+  // trusted proxy has already authenticated the user; this mints a session with no
+  // password form. 403 when not behind the trusted proxy (fall back to the form).
+  ssoLogin: () => get<{ token: string }>("/auth/sso"),
   initPassword: (password: string, setupToken: string) =>
     post<{ token: string }>("/auth/init", { password, setup_token: setupToken }),
   changePassword: (oldPassword: string, newPassword: string) =>
